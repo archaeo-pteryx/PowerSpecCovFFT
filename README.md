@@ -17,7 +17,7 @@ You can find an example Jupyter notebook [here](example/cov_non-gauss.ipynb).
 
 ### Authors
 
-- Yosuke Kobayashi (University of Arizona)
+- Yosuke Kobayashi (yosukekobayashi@arizona.edu)
 
 ### Citations
 
