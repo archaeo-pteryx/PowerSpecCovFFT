@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "powercovfft"
+version = "0.1.0"
+authors = [
+  {name = "Yosuke Kobayashi", email = "yosukekobayashi@arizona.edu"},
+]
+description = "FFTLog-based implementation of non-Gaussian covariance of galaxy power spectrum multipoles"
+readme = "README.md"
+license = {file = "LICENSE"}
+dependencies = [
+    "numpy",
+    "scipy",
+    "sympy>=1.11.0",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[project.urls]
+Homepage = "https://github.com/archaeo-pteryx/PowerSpecCovFFT"
