@@ -1,7 +1,5 @@
 import numpy as np
 from scipy.integrate import quad
-import itertools
-import glob, re, copy
 
 from power_law_decomp import PowerLawDecomp
 import utils
