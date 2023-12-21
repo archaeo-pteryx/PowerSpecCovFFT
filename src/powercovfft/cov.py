@@ -1,8 +1,8 @@
 import numpy as np
 from scipy.integrate import quad
 
-from power_law_decomp import PowerLawDecomp
-import utils
+from .power_law_decomp import PowerLawDecomp
+from . import utils
 
 
 class PowerSpecCovFFT:
