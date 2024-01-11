@@ -68,7 +68,7 @@ class CovCoeff:
         
         self.expr = {}
         self.set_ab = set()
-        fnames = glob.glob(os.path.dirname(__file__)+'/coeff_func/%s_*.txt' % (name))
+        fnames = glob.glob(os.path.dirname(__file__)+'/coeff_func/%s_l*.txt' % (name))
         for fname in fnames:
             l1, l2, a, b = self.get_args_comb(fname)
             with open(fname,'r') as file:
@@ -84,7 +84,7 @@ class CovCoeff:
         b2 = var('b2')
         bG2 = var('bG2')
 
-        self.func = {key: lambdify([k1,k2,f,b1,b2,bG2], self.expr[key], modules='numpy') for key in self.expr.keys()}
+        self.func = {key: lambdify([k1, k2, f, b1, b2, bG2], self.expr[key], modules='numpy') for key in self.expr.keys()}
 
     def __call__(self, a, b, l1, l2, k1, k2, f, bias):
         k1 = np.atleast_1d(k1)
@@ -94,7 +94,7 @@ class CovCoeff:
         b2 = bias['b2']
         bG2 = bias['bG2']
 
-        return self.func[(l1,l2,a,b)](k1,k2,f,b1,b2,bG2)
+        return self.func[(l1, l2, a, b)](k1, k2, f, b1, b2, bG2)
 
     def get_args_comb(self, fname):
         m = re.search(self.name, fname)
@@ -135,15 +135,15 @@ class CovIntegral:
         b1 = var('b1')
         b2 = var('b2')
         bG2 = var('bG2')
-        bGamma3 = var('bGamma3')
         b3 = var('b3')
         bG3 = var('bG3')
         bdG2 = var('bdG2')
+        bGamma3 = var('bGamma3')
 
         # for k1 != k2
-        self.func = {key: lambdify([r,logkpm,f,b1,b2,bG2,bGamma3,b3,bG3,bdG2], self.expr[key], modules='numpy') for key in self.expr.keys()}
+        self.func = {key: lambdify([r, logkpm, f, b1, b2, bG2, b3, bG3, bdG2, bGamma3], self.expr[key], modules='numpy') for key in self.expr.keys()}
         # for k1 == k2
-        self.func_diag = {key: lambdify([f,b1,b2,bG2,bGamma3,b3,bG3,bdG2], self.expr_diag[key], modules='numpy') for key in self.expr.keys()}
+        self.func_diag = {key: lambdify([f, b1, b2, bG2, b3, bG3, bdG2, bGamma3], self.expr_diag[key], modules='numpy') for key in self.expr.keys()}
 
     def __call__(self, l1, l2, k1, k2, f, bias):
         k1 = np.float128(np.atleast_1d(k1))
@@ -151,18 +151,18 @@ class CovIntegral:
 
         r = k2 / k1
         k2dummy = np.where(k2!=k1, k2, k1+0.1)
-        logkpm = np.log((k1+k2)/np.abs(k1-k2dummy))
+        logkpm = np.log((k1 + k2) / np.abs(k1 - k2dummy))
 
         b1 = np.float128(bias['b1'])
         b2 = np.float128(bias['b2'])
         bG2 = np.float128(bias['bG2'])
-        bGamma3 = np.float128(bias['bGamma3'])
         b3 = np.float128(bias['b3'])
         bG3 = np.float128(bias['bG3'])
         bdG2 = np.float128(bias['bdG2'])
+        bGamma3 = np.float128(bias['bGamma3'])
 
-        res1 = self.func[(l1,l2)](r,logkpm,f,b1,b2,bG2,bGamma3,b3,bG3,bdG2)
-        res2 = self.func_diag[(l1,l2)](f,b1,b2,bG2,bGamma3,b3,bG3,bdG2) * np.ones(k1.shape)
+        res1 = self.func[(l1, l2)](r, logkpm, f, b1, b2, bG2, b3, bG3, bdG2, bGamma3)
+        res2 = self.func_diag[(l1, l2)](f, b1, b2, bG2, b3, bG3, bdG2, bGamma3) * np.ones(k1.shape)
         res = res1 * np.where(k2!=k1, 1, 0) + res2 * np.where(k2==k1, 1, 0)
         return res
 
@@ -182,7 +182,7 @@ class CovIntegrand:
         self.expr = {}
         self.expr_diag = {}
         
-        fnames = glob.glob(os.path.dirname(__file__)+'/integrand/%s*.txt' % (name))
+        fnames = glob.glob(os.path.dirname(__file__)+'/integrand/%s_l*.txt' % (name))
         for fname in fnames:
             l1, l2 = self.get_args_comb(fname)
             with open(fname,'r') as file:
@@ -198,7 +198,7 @@ class CovIntegrand:
         b2 = var('b2')
         bG2 = var('bG2')
 
-        self.func = {key: lambdify([mu12,k1,k2,f,b1,b2,bG2], self.expr[key], modules='numpy') for key in self.expr.keys()}
+        self.func = {key: lambdify([mu12, k1, k2, f, b1, b2, bG2], self.expr[key], modules='numpy') for key in self.expr.keys()}
 
     def __call__(self, mu12, l1, l2, k1, k2, f, bias):
         mu12 = np.atleast_1d(mu12)
@@ -209,7 +209,7 @@ class CovIntegrand:
         b2 = bias['b2']
         bG2 = bias['bG2']
 
-        return self.func[(l1,l2)](mu12,k1,k2,f,b1,b2,bG2)
+        return self.func[(l1, l2)](mu12, k1, k2, f, b1, b2, bG2)
 
     def get_args_comb(self, fname):
         m = re.search(self.name, fname)

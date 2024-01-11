@@ -68,7 +68,7 @@ class CovCoeff:
         
         self.expr = {}
         self.set_ab = set()
-        fnames = glob.glob(os.path.dirname(__file__)+'/coeff_func/%s_*.txt' % (name))
+        fnames = glob.glob(os.path.dirname(__file__)+'/coeff_func/%s_l*.txt' % (name))
         for fname in fnames:
             l1, l2, a, b = self.get_args_comb(fname)
             with open(fname,'r') as file:
@@ -202,7 +202,7 @@ class CovIntegrand:
         self.expr = {}
         self.expr_diag = {}
         
-        fnames = glob.glob(os.path.dirname(__file__)+'/integrand/%s*.txt' % (name))
+        fnames = glob.glob(os.path.dirname(__file__)+'/integrand/%s_l*.txt' % (name))
         for fname in fnames:
             l1, l2 = self.get_args_comb(fname)
             with open(fname,'r') as file:
