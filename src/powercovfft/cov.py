@@ -48,11 +48,11 @@ class PowerSpecCovFFT:
         self.get_pk_lin = get_pk_lin
         self.decomp.compute(self.get_pk_lin)
 
-    def set_params(self, vol, ndens, fgrowth, bias):
+    def set_params(self, vol, fgrowth, bias, ndens):
         self.vol = vol
-        self.ndens = ndens
         self.fgrowth = fgrowth
         self.bias = bias
+        self.ndens = ndens
 
     def calc_master_integral(self, k1, k2, z_switch=0.1):
         k1 = np.atleast_1d(k1)
@@ -104,8 +104,8 @@ class PowerSpecCovFFT:
 
     def get_cov_T3111(self, l1, l2, k1, k2):
         # T0 contribution from T3111 ("star") term, whose integration is done analytically.
-        term1 = self.get_pk_lin(k1)**2 * self.get_pk_lin(k2) * self.cov_integral['T3111'](l1, l2, k1, k2, self.fgrowth, self.bias)
-        term2 = self.get_pk_lin(k2)**2 * self.get_pk_lin(k1) * self.cov_integral['T3111'](l1, l2, k2, k1, self.fgrowth, self.bias)
+        term1 = 12 * self.get_pk_lin(k1)**2 * self.get_pk_lin(k2) * self.cov_integral['T3111'](l1, l2, k1, k2, self.fgrowth, self.bias)
+        term2 = 12 * self.get_pk_lin(k2)**2 * self.get_pk_lin(k1) * self.cov_integral['T3111'](l1, l2, k2, k1, self.fgrowth, self.bias)
         return term1 + term2
 
     def get_cov_T_SN_B(self, l1, l2, k1, k2):
