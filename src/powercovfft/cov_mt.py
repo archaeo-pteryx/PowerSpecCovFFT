@@ -2,7 +2,7 @@ import numpy as np
 from scipy.integrate import quad
 
 from .cov import PowerSpecCovFFT
-from . import utils
+from . import utils_mt
 
 def dkron(a, b):
     return 1 if a == b else 0
@@ -13,19 +13,19 @@ class PowerSpecCovFFTMultiTracer(PowerSpecCovFFT):
         self.coeff_func = {}
         self.set_ab = set()
         for name in names:
-            self.coeff_func[name] = utils.CovCoeff(name + '_mt')
+            self.coeff_func[name] = utils_mt.CovCoeff(name + '_mt')
             self.set_ab = self.set_ab | self.coeff_func[name].set_ab
 
     def set_integral_formulae(self, names=['T3111','T_SN_B_1']):
         self.cov_integral = {}
         for name in names:
-            self.cov_integral[name] = utils.CovIntegral(name + '_mt')
+            self.cov_integral[name] = utils_mt.CovIntegral(name + '_mt')
 
     # for direct integration
     def set_integrand_formulae(self, names=['T2211_1','T2211_2','T_SN_B_2','T_SN_P']):
         self.cov_integrand = {}
         for name in names:
-            self.cov_integrand[name] = utils.CovIntegrand(name + '_mt')
+            self.cov_integrand[name] = utils_mt.CovIntegrand(name + '_mt')
 
     def set_params(self, vol, fgrowth, tracer_name_list, bias_list, ndens_list):
         self.vol = vol
@@ -95,10 +95,10 @@ class PowerSpecCovFFTMultiTracer(PowerSpecCovFFT):
     def get_cov_T3111(self, l1, l2, k1, k2):
         # T0 contribution from T3111 ("star") term, whose integration is done analytically.
 
-        term1 = self.get_pk_lin(k1)**2 * self.get_pk_lin(k2) * self.get_cov_T0_term(l1, l2, k1, k2, name='T3111', indices=['a','b','c','d'])
-        term2 = self.get_pk_lin(k1)**2 * self.get_pk_lin(k2) * self.get_cov_T0_term(l1, l2, k1, k2, name='T3111', indices=['a','b','d','c'])
-        term3 = self.get_pk_lin(k2)**2 * self.get_pk_lin(k1) * self.get_cov_T0_term(l1, l2, k2, k1, name='T3111', indices=['c','d','a','b'])
-        term4 = self.get_pk_lin(k2)**2 * self.get_pk_lin(k1) * self.get_cov_T0_term(l1, l2, k2, k1, name='T3111', indices=['c','d','b','a'])
+        term1 = 6 * self.get_pk_lin(k1)**2 * self.get_pk_lin(k2) * self.get_cov_T0_term(l1, l2, k1, k2, name='T3111', indices=['a','b','c','d'])
+        term2 = 6 * self.get_pk_lin(k1)**2 * self.get_pk_lin(k2) * self.get_cov_T0_term(l1, l2, k1, k2, name='T3111', indices=['a','b','d','c'])
+        term3 = 6 * self.get_pk_lin(k2)**2 * self.get_pk_lin(k1) * self.get_cov_T0_term(l1, l2, k2, k1, name='T3111', indices=['c','d','a','b'])
+        term4 = 6 * self.get_pk_lin(k2)**2 * self.get_pk_lin(k1) * self.get_cov_T0_term(l1, l2, k2, k1, name='T3111', indices=['c','d','b','a'])
         
         term = term1 + term2 + term3 + term4
         return term
@@ -106,22 +106,16 @@ class PowerSpecCovFFTMultiTracer(PowerSpecCovFFT):
     def get_cov_T_SN_B(self, l1, l2, k1, k2):
 
         factor = dkron(self.tracer_names['a'], self.tracer_names['c']) / self.ndens['a'] + dkron(self.tracer_names['b'], self.tracer_names['c']) / self.ndens['b']
-        if factor == 0:
-            term_Babd = 0
-        else:
-            term1 = 2 * self.get_pk_lin(k1) * self.get_pk_lin(k2) * self.get_cov_T0_term(l1, l2, k1, k2, name='T_SN_B_1', indices=['a','b','d','c'])
-            term2 = 2 * self.get_pk_lin(k1) * self.get_cov_T0_term(l1, l2, k1, k2, name='T_SN_B_2', indices=['a','b','d','c'])
-            term3 = 2 * self.get_pk_lin(k2) * self.get_cov_T0_term(l1, l2, k2, k1, name='T_SN_B_2', indices=['a','b','d','c'])
-            term_Babd = factor * (term1 + term2 + term3)
+        term1 = 2 * self.get_pk_lin(k1) * self.get_pk_lin(k2) * self.get_cov_T0_term(l1, l2, k1, k2, name='T_SN_B_1', indices=['a','b','d','c'])
+        term2 = 2 * self.get_pk_lin(k1) * self.get_cov_T0_term(l1, l2, k1, k2, name='T_SN_B_2', indices=['a','b','d','c'])
+        term3 = 2 * self.get_pk_lin(k2) * self.get_cov_T0_term(l1, l2, k2, k1, name='T_SN_B_2', indices=['a','b','d','c'])
+        term_Babd = factor * (term1 + term2 + term3)
 
         factor = dkron(self.tracer_names['a'], self.tracer_names['d']) / self.ndens['a'] + dkron(self.tracer_names['b'], self.tracer_names['d']) / self.ndens['b']
-        if factor == 0:
-            term_Babc = 0
-        else:
-            term1 = 2 * self.get_pk_lin(k1) * self.get_pk_lin(k2) * self.get_cov_T0_term(l1, l2, k1, k2, name='T_SN_B_1', indices=['a','b','c','d'])
-            term2 = 2 * self.get_pk_lin(k1) * self.get_cov_T0_term(l1, l2, k1, k2, name='T_SN_B_2', indices=['a','b','c','d'])
-            term3 = 2 * self.get_pk_lin(k2) * self.get_cov_T0_term(l1, l2, k2, k1, name='T_SN_B_2', indices=['a','b','c','d'])
-            term_Babc = factor * (term1 + term2 + term3)
+        term1 = 2 * self.get_pk_lin(k1) * self.get_pk_lin(k2) * self.get_cov_T0_term(l1, l2, k1, k2, name='T_SN_B_1', indices=['a','b','c','d'])
+        term2 = 2 * self.get_pk_lin(k1) * self.get_cov_T0_term(l1, l2, k1, k2, name='T_SN_B_2', indices=['a','b','c','d'])
+        term3 = 2 * self.get_pk_lin(k2) * self.get_cov_T0_term(l1, l2, k2, k1, name='T_SN_B_2', indices=['a','b','c','d'])
+        term_Babc = factor * (term1 + term2 + term3)
 
         term = term_Babd + term_Babc
         return term
@@ -130,10 +124,7 @@ class PowerSpecCovFFTMultiTracer(PowerSpecCovFFT):
         factor = dkron(self.tracer_names['a'], self.tracer_names['c']) * dkron(self.tracer_names['b'], self.tracer_names['d'])
         factor += dkron(self.tracer_names['a'], self.tracer_names['d']) * dkron(self.tracer_names['b'], self.tracer_names['c'])
         factor /= (self.ndens['a'] * self.ndens['b'])
-        if factor == 0:
-            term = 0
-        else:
-            term = factor * self.get_cov_T0_term(l1, l2, k1, k2, name='T_SN_P', indices=['a','b','c','d'])
+        term = factor * self.get_cov_T0_term(l1, l2, k1, k2, name='T_SN_P', indices=['a','b','c','d'])
         return term
 
     # main function to compute T0 part Eq. (7)
@@ -158,18 +149,13 @@ class PowerSpecCovFFTMultiTracer(PowerSpecCovFFT):
 
     def get_cov_T0_SN_direct(self, l1, l2, k1, k2, epsrel=1e-8, limit=10000):
         factor = dkron(self.tracer_names['a'], self.tracer_names['c']) / self.ndens['a'] + dkron(self.tracer_names['b'], self.tracer_names['c']) / self.ndens['b']
-        if factor == 0:
-            term_Babd = 0
-        else:
-            term_Babd = factor * self.get_pk_lin(k1) * self.get_pk_lin(k2) * self.get_cov_T0_term(l1, l2, k1, k2, name='T_SN_B_1', indices=['a','b','d','c'])
+        term_Babd = factor * self.get_pk_lin(k1) * self.get_pk_lin(k2) * self.get_cov_T0_term(l1, l2, k1, k2, name='T_SN_B_1', indices=['a','b','d','c'])
         
         factor = dkron(self.tracer_names['a'], self.tracer_names['d']) / self.ndens['a'] + dkron(self.tracer_names['b'], self.tracer_names['d']) / self.ndens['b']
-        if factor == 0:
-            term_Babc = 0
-        else:
-            term_Babc = factor * self.get_pk_lin(k1) * self.get_pk_lin(k2) * self.get_cov_T0_term(l1, l2, k1, k2, name='T_SN_B_1', indices=['a','b','c','d'])
+        term_Babc = factor * self.get_pk_lin(k1) * self.get_pk_lin(k2) * self.get_cov_T0_term(l1, l2, k1, k2, name='T_SN_B_1', indices=['a','b','c','d'])
         
         term_SN_B1 = term_Babd + term_Babc
+
         term_SN_B2_P = quad(self.get_T0_SN_integrand, -1, 1, args=(l1, l2, k1, k2), epsrel=epsrel, limit=limit)[0] / 2
         cov = (term_SN_B1 + term_SN_B2_P) / self.vol
         return cov
@@ -197,20 +183,14 @@ class PowerSpecCovFFTMultiTracer(PowerSpecCovFFT):
 
         # T_SN_B term
         factor = dkron(self.tracer_names['a'], self.tracer_names['c']) / self.ndens['a'] + dkron(self.tracer_names['b'], self.tracer_names['c']) / self.ndens['b']
-        if factor == 0:
-            term_Babd = 0
-        else:
-            term1 = self.get_pk_lin(k1) * self.get_cov_T0_integrand(mu12, l1, l2, k1, k2, name='T_SN_B_2', indices=['a','b','d','c'])
-            term2 = self.get_pk_lin(k2) * self.get_cov_T0_integrand(mu12, l1, l2, k1, k2, name='T_SN_B_2', indices=['a','b','d','c'])
-            term_Babd = factor * (term1 + term2)
+        term1 = self.get_pk_lin(k1) * self.get_cov_T0_integrand(mu12, l1, l2, k1, k2, name='T_SN_B_2', indices=['a','b','d','c'])
+        term2 = self.get_pk_lin(k2) * self.get_cov_T0_integrand(mu12, l1, l2, k1, k2, name='T_SN_B_2', indices=['a','b','d','c'])
+        term_Babd = factor * (term1 + term2)
 
         factor = dkron(self.tracer_names['a'], self.tracer_names['d']) / self.ndens['a'] + dkron(self.tracer_names['b'], self.tracer_names['d']) / self.ndens['b']
-        if factor == 0:
-            term_Babc = 0
-        else:
-            term1 = self.get_pk_lin(k1) * self.get_cov_T0_integrand(mu12, l1, l2, k1, k2, name='T_SN_B_2', indices=['a','b','c','d'])
-            term2 = self.get_pk_lin(k2) * self.get_cov_T0_integrand(mu12, l1, l2, k1, k2, name='T_SN_B_2', indices=['a','b','c','d'])
-            term_Babc = factor * (term1 + term2)
+        term1 = self.get_pk_lin(k1) * self.get_cov_T0_integrand(mu12, l1, l2, k1, k2, name='T_SN_B_2', indices=['a','b','c','d'])
+        term2 = self.get_pk_lin(k2) * self.get_cov_T0_integrand(mu12, l1, l2, k1, k2, name='T_SN_B_2', indices=['a','b','c','d'])
+        term_Babc = factor * (term1 + term2)
         
         term_B2 = term_Babd + term_Babc
 
@@ -218,10 +198,7 @@ class PowerSpecCovFFTMultiTracer(PowerSpecCovFFT):
         factor = dkron(self.tracer_names['a'], self.tracer_names['c']) * dkron(self.tracer_names['b'], self.tracer_names['d'])
         factor += dkron(self.tracer_names['a'], self.tracer_names['d']) * dkron(self.tracer_names['b'], self.tracer_names['c'])
         factor /= (self.ndens['a'] * self.ndens['b'])
-        if factor == 0:
-            term_P = 0
-        else:
-            term_P = factor * self.get_cov_T0_integrand(mu12, l1, l2, k1, k2, name='T_SN_P', indices=['a','b','c','d'])
+        term_P = factor * self.get_cov_T0_integrand(mu12, l1, l2, k1, k2, name='T_SN_P', indices=['a','b','c','d'])
 
         k12 = np.sqrt(k1**2 + k2**2 + 2 * k1 * k2 * mu12)
         integrand = self.get_pk_lin(k12) * (term_B2 + term_P)
