@@ -1,8 +1,7 @@
 import os
 import glob, re
-import itertools
 import numpy as np
-from scipy.special import factorial, loggamma
+from scipy.special import loggamma
 from sympy.parsing.mathematica import parse_mathematica
 from sympy import var, lambdify
 
@@ -84,7 +83,6 @@ class CovCoeff:
         b1 = var('b1')
         b2 = var('b2')
         bG2 = var('bG2')
-        # bGamma3 = var('bGamma3')
 
         self.func = {key: lambdify([k1,k2,f,b1,b2,bG2], self.expr[key], modules='numpy') for key in self.expr.keys()}
 
@@ -95,7 +93,6 @@ class CovCoeff:
         b1 = bias['b1']
         b2 = bias['b2']
         bG2 = bias['bG2']
-        # bGamma3 = bias['bGamma3']
 
         return self.func[(l1,l2,a,b)](k1,k2,f,b1,b2,bG2)
 
