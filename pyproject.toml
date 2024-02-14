@@ -24,5 +24,8 @@ classifiers = [
 [tool.setuptools]
 include-package-data = true
 
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [project.urls]
 Homepage = "https://github.com/archaeo-pteryx/PowerSpecCovFFT"
