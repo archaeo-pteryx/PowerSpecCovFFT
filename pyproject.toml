@@ -27,5 +27,8 @@ include-package-data = true
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+powercovfft = ["*/*.txt"]
+
 [project.urls]
 Homepage = "https://github.com/archaeo-pteryx/PowerSpecCovFFT"
