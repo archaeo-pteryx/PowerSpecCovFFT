@@ -7,9 +7,7 @@ The code computes the non-Gaussian covariance of the power spectrum monopole, qu
 ### Installation
 
 ```bash
-git clone https://github.com/archaeo-pteryx/PowerSpecCovFFT.git
-cd PowerSpecCovFFT
-pip install -e .
+pip install powercovfft@git+https://github.com/archaeo-pteryx/PowerSpecCovFFT.git
 ```
 
 ### Basic Usage
