@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "powercovfft"
-version = "0.1.0"
+version = "0.1.1"
 authors = [
   {name = "Yosuke Kobayashi", email = "yosukekobayashi@arizona.edu"},
 ]
@@ -26,6 +26,9 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+powercovfft = ["*/*.txt"]
 
 [project.urls]
 Homepage = "https://github.com/archaeo-pteryx/PowerSpecCovFFT"
