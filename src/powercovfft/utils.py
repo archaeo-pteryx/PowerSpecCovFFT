@@ -1,65 +1,9 @@
 import os
 import glob, re
 import numpy as np
-from scipy.special import loggamma
 from sympy.parsing.mathematica import parse_mathematica
 from sympy import var, lambdify
 
-
-class MasterIntegral:
-
-    def __init__(self):
-        dirname = os.path.dirname(__file__)
-        
-        fnames = [dirname+'/master_int/poly_b%s.txt' % (b) for b in range(13)]
-        self.expr_poly = []
-        for fname in fnames:
-            with open(fname,'r') as file:
-                expr = file.read()
-            expr = parse_mathematica(expr)
-            self.expr_poly.append(expr)
-            
-        fnames = [dirname+'/master_int/z0lim20_b%s.txt' % (b) for b in range(13)]
-        self.expr_z0lim = []
-        for fname in fnames:
-            with open(fname,'r') as file:
-                expr = file.read()
-            expr = parse_mathematica(expr)
-            self.expr_z0lim.append(expr)
-            
-        fnames = [dirname+'/master_int/z1_b%s.txt' % (b) for b in range(13)]
-        self.expr_z1 = []
-        for fname in fnames:
-            with open(fname,'r') as file:
-                expr = file.read()
-            expr = parse_mathematica(expr)
-            self.expr_z1.append(expr)
-        
-        z = var('z')
-        a = var('a')
-        
-        self.poly = [lambdify([z,a], expr, modules='numpy') for expr in self.expr_poly]
-        self.z0lim = [lambdify([z,a], expr, modules='numpy') for expr in self.expr_z0lim]
-        self.z1 = [lambdify([a], expr, modules='numpy') for expr in self.expr_z1]
-
-    def __call__(self, a, b, k1, k2, z_switch=0.1):
-        a = np.atleast_1d(a)
-        k1 = np.atleast_1d(k1)
-        k2 = np.atleast_1d(k2)
-
-        z = 2 * k1 * k2 / (k1**2 + k2**2)
-
-        fac = np.exp(loggamma(b+2) - (b+1) * np.log(z) - np.log(np.prod([a-n for n in range(1,b+2)], axis=0)))
-        res = fac * (self.poly[b](-z,a) / (1+z)**a - self.poly[b](z,a) / (1-np.where(z!=1.,z,0))**a)
-        
-        res_z1 = self.z1[b](a * np.ones_like(z))
-        res = res * np.where(z!=1.,1,0) + res_z1 * np.where(z==1.,1,0)
-        
-        res_z0 = self.z0lim[b](z,a)
-        res = res * np.where(np.abs(z)>z_switch,1,0) + res_z0 * np.where(np.abs(z)<=z_switch,1,0)
-        
-        res = (k1**2 + k2**2)**(-a) * res / (2 * (b+1))
-        return res
 
 class CovCoeff:
 
@@ -68,7 +12,7 @@ class CovCoeff:
         
         self.expr = {}
         self.set_ab = set()
-        fnames = glob.glob(os.path.dirname(__file__)+'/coeff_func/%s_*.txt' % (name))
+        fnames = glob.glob(os.path.dirname(__file__)+'/coeff_func/%s_l*.txt' % (name))
         for fname in fnames:
             l1, l2, a, b = self.get_args_comb(fname)
             with open(fname,'r') as file:
@@ -84,7 +28,7 @@ class CovCoeff:
         b2 = var('b2')
         bG2 = var('bG2')
 
-        self.func = {key: lambdify([k1,k2,f,b1,b2,bG2], self.expr[key], modules='numpy') for key in self.expr.keys()}
+        self.func = {key: lambdify([k1, k2, f, b1, b2, bG2], self.expr[key], modules='numpy') for key in self.expr.keys()}
 
     def __call__(self, a, b, l1, l2, k1, k2, f, bias):
         k1 = np.atleast_1d(k1)
@@ -94,7 +38,7 @@ class CovCoeff:
         b2 = bias['b2']
         bG2 = bias['bG2']
 
-        return self.func[(l1,l2,a,b)](k1,k2,f,b1,b2,bG2)
+        return self.func[(l1, l2, a, b)](k1, k2, f, b1, b2, bG2)
 
     def get_args_comb(self, fname):
         m = re.search(self.name, fname)
@@ -135,15 +79,15 @@ class CovIntegral:
         b1 = var('b1')
         b2 = var('b2')
         bG2 = var('bG2')
-        bGamma3 = var('bGamma3')
         b3 = var('b3')
         bG3 = var('bG3')
         bdG2 = var('bdG2')
+        bGamma3 = var('bGamma3')
 
         # for k1 != k2
-        self.func = {key: lambdify([r,logkpm,f,b1,b2,bG2,bGamma3,b3,bG3,bdG2], self.expr[key], modules='numpy') for key in self.expr.keys()}
+        self.func = {key: lambdify([r, logkpm, f, b1, b2, bG2, b3, bG3, bdG2, bGamma3], self.expr[key], modules='numpy') for key in self.expr.keys()}
         # for k1 == k2
-        self.func_diag = {key: lambdify([f,b1,b2,bG2,bGamma3,b3,bG3,bdG2], self.expr_diag[key], modules='numpy') for key in self.expr.keys()}
+        self.func_diag = {key: lambdify([f, b1, b2, bG2, b3, bG3, bdG2, bGamma3], self.expr_diag[key], modules='numpy') for key in self.expr.keys()}
 
     def __call__(self, l1, l2, k1, k2, f, bias):
         k1 = np.float128(np.atleast_1d(k1))
@@ -151,18 +95,18 @@ class CovIntegral:
 
         r = k2 / k1
         k2dummy = np.where(k2!=k1, k2, k1+0.1)
-        logkpm = np.log((k1+k2)/np.abs(k1-k2dummy))
+        logkpm = np.log((k1 + k2) / np.abs(k1 - k2dummy))
 
         b1 = np.float128(bias['b1'])
         b2 = np.float128(bias['b2'])
         bG2 = np.float128(bias['bG2'])
-        bGamma3 = np.float128(bias['bGamma3'])
         b3 = np.float128(bias['b3'])
         bG3 = np.float128(bias['bG3'])
         bdG2 = np.float128(bias['bdG2'])
+        bGamma3 = np.float128(bias['bGamma3'])
 
-        res1 = self.func[(l1,l2)](r,logkpm,f,b1,b2,bG2,bGamma3,b3,bG3,bdG2)
-        res2 = self.func_diag[(l1,l2)](f,b1,b2,bG2,bGamma3,b3,bG3,bdG2) * np.ones(k1.shape)
+        res1 = self.func[(l1, l2)](r, logkpm, f, b1, b2, bG2, b3, bG3, bdG2, bGamma3)
+        res2 = self.func_diag[(l1, l2)](f, b1, b2, bG2, b3, bG3, bdG2, bGamma3) * np.ones(k1.shape)
         res = res1 * np.where(k2!=k1, 1, 0) + res2 * np.where(k2==k1, 1, 0)
         return res
 
@@ -182,7 +126,7 @@ class CovIntegrand:
         self.expr = {}
         self.expr_diag = {}
         
-        fnames = glob.glob(os.path.dirname(__file__)+'/integrand/%s*.txt' % (name))
+        fnames = glob.glob(os.path.dirname(__file__)+'/integrand/%s_l*.txt' % (name))
         for fname in fnames:
             l1, l2 = self.get_args_comb(fname)
             with open(fname,'r') as file:
@@ -198,7 +142,7 @@ class CovIntegrand:
         b2 = var('b2')
         bG2 = var('bG2')
 
-        self.func = {key: lambdify([mu12,k1,k2,f,b1,b2,bG2], self.expr[key], modules='numpy') for key in self.expr.keys()}
+        self.func = {key: lambdify([mu12, k1, k2, f, b1, b2, bG2], self.expr[key], modules='numpy') for key in self.expr.keys()}
 
     def __call__(self, mu12, l1, l2, k1, k2, f, bias):
         mu12 = np.atleast_1d(mu12)
@@ -209,7 +153,7 @@ class CovIntegrand:
         b2 = bias['b2']
         bG2 = bias['bG2']
 
-        return self.func[(l1,l2)](mu12,k1,k2,f,b1,b2,bG2)
+        return self.func[(l1, l2)](mu12, k1, k2, f, b1, b2, bG2)
 
     def get_args_comb(self, fname):
         m = re.search(self.name, fname)
