@@ -55,6 +55,21 @@ class PowerSpecCovFFT:
         self.bias = bias
         self.ndens = ndens
 
+    @property
+    def ndens2(self):
+        return self._ndens2 if hasattr(self, '_ndens2') else self.ndens**2
+    
+    @ndens2.setter
+    def ndens2(self, value):
+        self._ndens2 = value
+
+    def set_params_Iij(self, I22, I24, I34, I44, fgrowth, bias):
+        self.vol = I22**2 / I44
+        self.ndens = I44 / I34
+        self.ndens2 = I44 / I24
+        self.fgrowth = fgrowth
+        self.bias = bias
+
     def calc_master_integral(self, k1, k2, z_switch=0.1):
         k1 = np.atleast_1d(k1)
         k2 = np.atleast_1d(k2)
@@ -128,7 +143,7 @@ class PowerSpecCovFFT:
 
     def get_cov_T_SN_P(self, l1, l2, k1, k2):
         term = 2 * self.get_cov_T0_term(l1, l2, k1, k2, name='T_SN_P')
-        return term / self.ndens**2
+        return term / self.ndens2
 
     # main function to compute T0 part Eq. (7)
     def get_cov_T0(self, l1, l2, k1, k2):
@@ -170,7 +185,7 @@ class PowerSpecCovFFT:
         # T0 integrand from shot-noise terms
         term1 = 8 / self.ndens * self.get_pk_lin(k1) * self.get_cov_T0_integrand(mu12, l1, l2, k1, k2, name='T_SN_B_2')
         term2 = 8 / self.ndens * self.get_pk_lin(k2) * self.get_cov_T0_integrand(mu12, l1, l2, k2, k1, name='T_SN_B_2')
-        term3 = 2 / self.ndens**2 * self.get_cov_T0_integrand(mu12, l1, l2, k2, k1, name='T_SN_P')
+        term3 = 2 / self.ndens2 * self.get_cov_T0_integrand(mu12, l1, l2, k2, k1, name='T_SN_P')
 
         k12 = np.sqrt(k1**2 + k2**2 + 2 * k1 * k2 * mu12)
         integrand = self.get_pk_lin(k12) * (term1 + term2 + term3)

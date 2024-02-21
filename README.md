@@ -7,9 +7,7 @@ The code computes the non-Gaussian covariance of the power spectrum monopole, qu
 ### Installation
 
 ```bash
-git clone https://github.com/archaeo-pteryx/PowerSpecCovFFT.git
-cd PowerSpecCovFFT
-pip install -e .
+pip install powercovfft@git+https://github.com/archaeo-pteryx/PowerSpecCovFFT.git
 ```
 
 ### Basic Usage
@@ -22,4 +20,4 @@ You can find an example Jupyter notebook [here](example/cov_non-gauss.ipynb).
 
 ### Citations
 
-- Yosuke Kobayashi, Fast computation of non-Gaussian covariance of redshift-space galaxy power spectrum multipoles (2023, [arXiv](https://arxiv.org/abs/2308.08593), [Phys. Rev. D](https://journals.aps.org/prd/abstract/10.1103/PhysRevD.108.103512))
+- Yosuke Kobayashi, Fast computation of the non-Gaussian covariance of redshift-space galaxy power spectrum multipoles (2023, [arXiv](https://arxiv.org/abs/2308.08593), [Phys. Rev. D](https://journals.aps.org/prd/abstract/10.1103/PhysRevD.108.103512))
