@@ -1,7 +1,8 @@
 import numpy as np
 from scipy.integrate import quad
+from scipy.interpolate import InterpolatedUnivariateSpline
 
-from .power_law_decomp import PowerLawDecomp
+from .power_law_decomp import PowerLawDecomp, get_log_extrap
 from .master_integral import MasterIntegral
 from . import utils
 
@@ -45,9 +46,13 @@ class PowerSpecCovFFT:
         nmax = config['nmax']
         self.decomp = PowerLawDecomp(nu, kmin, kmax, nmax)
 
-    def set_pk_lin(self, get_pk_lin):
-        self.get_pk_lin = get_pk_lin
+    def set_pk_lin(self, k, pk_lin, kmin=1e-7, kmax=1e+7):
+        k_extrap, pk_extrap = get_log_extrap(k, pk_lin, kmin, kmax)
+        self.pk_lin_spl = InterpolatedUnivariateSpline(np.log(k_extrap), np.log(pk_extrap))
         self.decomp.compute(self.get_pk_lin)
+
+    def get_pk_lin(self, k): # in unit of [h^{-3} Mpc^3]
+        return np.exp(self.pk_lin_spl(np.log(k)))
 
     def set_params(self, vol, fgrowth, bias, ndens):
         self.vol = vol
