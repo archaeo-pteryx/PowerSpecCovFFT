@@ -25,3 +25,28 @@ class PowerLawDecomp:
         self.c_m_tile = np.tile(self.c_m, (len(self.kn), 1)).T
         self.func_q = self.c_m_tile * self.kn_tile**self.nu_m_tile
         self.func_rec = np.sum(self.func_q, axis=0)
+
+
+def get_log_extrap(x, y, xmin, xmax):
+    x_low = x_high = []
+    y_low = y_high = []
+
+    if xmin < x[0]:
+        dlnx_low = np.log(x[1]/x[0])
+        num_low = int(np.log(x[0]/xmin) / dlnx_low) + 1
+        x_low = x[0] * np.exp(dlnx_low * np.arange(-num_low, 0))
+
+        dlny_low = np.log(y[1]/y[0])
+        y_low = y[0] * np.exp(dlny_low * np.arange(-num_low, 0))
+
+    if xmax > x[-1]:
+        dlnx_high= np.log(x[-1]/x[-2])
+        num_high = int(np.log(xmax/x[-1]) / dlnx_high) + 1
+        x_high = x[-1] * np.exp(dlnx_high * np.arange(1, num_high+1))
+
+        dlny_high = np.log(y[-1]/y[-2])
+        y_high = y[-1] * np.exp(dlny_high * np.arange(1, num_high+1))
+
+    x_extrap = np.hstack((x_low, x, x_high))
+    y_extrap = np.hstack((y_low, y, y_high))
+    return x_extrap, y_extrap
